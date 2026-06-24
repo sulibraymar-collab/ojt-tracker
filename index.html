@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raymar's OJT Tracker — QQ English</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0f1e;
+    --surface: #111827;
+    --surface2: #1a2438;
+    --border: #1e2d45;
+    --accent: #3b82f6;
+    --accent2: #06b6d4;
+    --gold: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --purple: #8b5cf6;
+    --text: #f1f5f9;
+    --muted: #64748b;
+    --subtle: #334155;
+  }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated starfield bg */
+  .stars {
+    position: fixed; inset: 0; z-index: 0;
+    background: 
+      radial-gradient(ellipse at 20% 50%, rgba(59,130,246,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(6,182,212,0.05) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 20px 60px;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    padding: 40px 0 32px;
+  }
+  .header .eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--accent2);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .header h1 {
+    font-size: clamp(28px, 6vw, 48px);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #f1f5f9 30%, #3b82f6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header .sub {
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* BIG PROGRESS RING */
+  .ring-section {
+    display: flex;
+    justify-content: center;
+    margin: 8px 0 32px;
+  }
+  .ring-wrap {
+    position: relative;
+    width: 220px; height: 220px;
+  }
+  .ring-wrap svg {
+    transform: rotate(-90deg);
+    width: 100%; height: 100%;
+  }
+  .ring-track {
+    fill: none;
+    stroke: var(--surface2);
+    stroke-width: 12;
+  }
+  .ring-fill {
+    fill: none;
+    stroke: url(#ringGrad);
+    stroke-width: 12;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1);
+  }
+  .ring-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .ring-pct {
+    font-family: 'Space Mono', monospace;
+    font-size: 38px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .ring-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .ring-hours {
+    font-size: 13px;
+    color: var(--text);
+    margin-top: 2px;
+    font-weight: 500;
+  }
+
+  /* STATS ROW */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 14px;
+    text-align: center;
+  }
+  .stat-card .val {
+    font-family: 'Space Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-card .lbl {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .val.green { color: var(--green); }
+  .val.blue  { color: var(--accent); }
+  .val.gold  { color: var(--gold); }
+  .val.cyan  { color: var(--accent2); }
+  .val.purple{ color: var(--purple); }
+
+  /* LOG SECTION */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .section-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* LOG HOURS FORM */
+  .log-form {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .log-form input[type="date"],
+  .log-form input[type="number"] {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .log-form input:focus { border-color: var(--accent); }
+  .log-form input[type="date"] { flex: 1; min-width: 140px; }
+  .log-form input[type="number"] { width: 90px; }
+  .btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    white-space: nowrap;
+  }
+  .btn:hover { background: #2563eb; }
+  .btn:active { transform: scale(0.97); }
+  .btn.danger { background: var(--red); }
+  .btn.danger:hover { background: #dc2626; }
+  .btn.sm { padding: 6px 12px; font-size: 12px; }
+
+  /* LOG LIST */
+  .log-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+  .log-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+  .log-item .log-date { color: var(--muted); font-size: 12px; font-family: 'Space Mono', monospace; }
+  .log-item .log-dept { 
+    font-size: 11px; 
+    color: var(--accent2); 
+    background: rgba(6,182,212,0.1);
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .log-item .log-hrs { font-weight: 600; color: var(--green); }
+  .log-item .log-note { color: var(--muted); font-size: 12px; flex: 1; margin: 0 10px; }
+
+  /* MILESTONES */
+  .milestones { display: flex; flex-direction: column; gap: 10px; }
+  .milestone {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    transition: border-color 0.3s;
+  }
+  .milestone.reached {
+    border-color: var(--green);
+    background: rgba(16,185,129,0.05);
+  }
+  .milestone.next {
+    border-color: var(--accent);
+    background: rgba(59,130,246,0.05);
+  }
+  .milestone-icon {
+    font-size: 22px;
+    width: 36px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .milestone-info { flex: 1; }
+  .milestone-name { font-size: 14px; font-weight: 600; }
+  .milestone-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .milestone-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 700;
+  }
+  .badge-done { background: rgba(16,185,129,0.15); color: var(--green); }
+  .badge-next { background: rgba(59,130,246,0.15); color: var(--accent); }
+  .badge-lock { background: rgba(100,116,139,0.15); color: var(--muted); }
+
+  /* MOTIVATION */
+  .motivation-box {
+    background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(6,182,212,0.08));
+    border: 1px solid rgba(59,130,246,0.25);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .motivation-box::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(59,130,246,0.12), transparent 70%);
+    pointer-events: none;
+  }
+  .quote-text {
+    font-size: 16px;
+    font-style: italic;
+    color: var(--text);
+    line-height: 1.6;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .quote-text::before { content: '"'; color: var(--accent); font-size: 28px; line-height: 0; vertical-align: -10px; margin-right: 4px; }
+  .quote-text::after  { content: '"'; color: var(--accent); font-size: 28px; line-height: 0; vertical-align: -10px; margin-left: 4px; }
+  .quote-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 6px 16px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Space Grotesk', sans-serif;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .quote-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* COUNTDOWN TIMER */
+  .countdown-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .flip-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 8px 12px;
+    text-align: center;
+  }
+  .flip-num {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(24px, 5vw, 36px);
+    font-weight: 700;
+    color: var(--accent2);
+    line-height: 1;
+  }
+  .flip-lbl {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 4px;
+  }
+
+  /* SETTINGS */
+  .settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .field input, .field select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+  .field select option { background: var(--surface2); }
+  .settings-save { margin-top: 14px; }
+
+  /* ROTATION DEPT */
+  .dept-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: var(--surface2);
+    border-radius: 10px;
+    margin-bottom: 8px;
+  }
+  .dept-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dept-name { flex: 1; font-size: 14px; }
+  .dept-status { font-size: 11px; padding: 3px 10px; border-radius: 20px; }
+  .active-dept { background: rgba(16,185,129,0.15); color: var(--green); }
+  .upcoming-dept { background: rgba(100,116,139,0.1); color: var(--muted); }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--green);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 100;
+    max-width: 280px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* FINISH COUNTDOWN */
+  .finish-date {
+    text-align: center;
+    padding: 10px;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: -8px;
+    margin-bottom: 16px;
+  }
+  .finish-date strong { color: var(--gold); }
+
+  @media (max-width: 500px) {
+    .stats-grid { grid-template-columns: repeat(3, 1fr); }
+    .settings-grid { grid-template-columns: 1fr; }
+    .log-item .log-note { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="stars"></div>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="eyebrow">OJT Tracker — QQ English / GreatEnglish Corp.</div>
+    <h1 id="greeting">You're doing great, Raymar! 💪</h1>
+    <div class="sub">CTU–Carmen · BIT-CT 4A · 1,800 Hours Journey</div>
+  </div>
+
+  <!-- MOTIVATION QUOTE -->
+  <div class="motivation-box">
+    <div class="quote-text" id="quoteText">Every hour you log is one step closer to becoming the IT professional you're training to be.</div>
+    <button class="quote-btn" onclick="newQuote()">✨ New Quote</button>
+  </div>
+
+  <!-- PROGRESS RING -->
+  <div class="ring-section">
+    <div class="ring-wrap">
+      <svg viewBox="0 0 220 220">
+        <defs>
+          <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#3b82f6"/>
+            <stop offset="100%" stop-color="#06b6d4"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-track" cx="110" cy="110" r="96"/>
+        <circle class="ring-fill" id="ringFill" cx="110" cy="110" r="96"
+          stroke-dasharray="603.2" stroke-dashoffset="603.2"/>
+      </svg>
+      <div class="ring-center">
+        <div class="ring-pct" id="ringPct">0%</div>
+        <div class="ring-label">Complete</div>
+        <div class="ring-hours" id="ringHours">0 / 1800 hrs</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="val green" id="statDone">16</div>
+      <div class="lbl">Hours Done</div>
+    </div>
+    <div class="stat-card">
+      <div class="val blue" id="statLeft">1784</div>
+      <div class="lbl">Hours Left</div>
+    </div>
+    <div class="stat-card">
+      <div class="val gold" id="statDays">2</div>
+      <div class="lbl">Days Rendered</div>
+    </div>
+  </div>
+  <div class="stats-grid" style="margin-bottom:20px">
+    <div class="stat-card">
+      <div class="val cyan" id="statEst">—</div>
+      <div class="lbl">Days Remaining</div>
+    </div>
+    <div class="stat-card">
+      <div class="val purple" id="statAvg">8.0</div>
+      <div class="lbl">Avg Hrs/Day</div>
+    </div>
+    <div class="stat-card">
+      <div class="val gold" id="statSem">900</div>
+      <div class="lbl">This Sem Left</div>
+    </div>
+  </div>
+
+  <!-- ESTIMATED FINISH COUNTDOWN -->
+  <div class="finish-date">Estimated finish date: <strong id="finishDate">calculating...</strong></div>
+
+  <!-- TIME COUNTDOWN -->
+  <div class="section">
+    <div class="section-title">⏳ Live Time Until Est. Finish</div>
+    <div class="countdown-row">
+      <div class="flip-card"><div class="flip-num" id="cdDays">0</div><div class="flip-lbl">Days</div></div>
+      <div class="flip-card"><div class="flip-num" id="cdHours">0</div><div class="flip-lbl">Hours</div></div>
+      <div class="flip-card"><div class="flip-num" id="cdMins">0</div><div class="flip-lbl">Mins</div></div>
+      <div class="flip-card"><div class="flip-num" id="cdSecs">0</div><div class="flip-lbl">Secs</div></div>
+    </div>
+  </div>
+
+  <!-- LOG HOURS -->
+  <div class="section">
+    <div class="section-title">📋 Log Hours</div>
+    <div class="log-form">
+      <input type="date" id="logDate">
+      <input type="number" id="logHrs" placeholder="Hours" min="0.5" max="12" step="0.5" value="8">
+      <input type="text" id="logNote" placeholder="Note (optional)" style="flex:2; min-width:120px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; color:var(--text); font-family:'Space Grotesk',sans-serif; font-size:14px; padding:10px 14px; outline:none;">
+      <button class="btn" onclick="logHours()">+ Log</button>
+    </div>
+    <div class="log-list" id="logList"></div>
+  </div>
+
+  <!-- MILESTONES -->
+  <div class="section">
+    <div class="section-title">🏆 Milestones</div>
+    <div class="milestones" id="milestoneList"></div>
+  </div>
+
+  <!-- DEPARTMENT ROTATION -->
+  <div class="section">
+    <div class="section-title">🔄 Department Rotation</div>
+    <div id="deptList">
+      <div class="dept-row">
+        <div class="dept-dot" style="background:var(--green)"></div>
+        <div class="dept-name">☕ Cafeteria / Operations</div>
+        <span class="dept-status active-dept">Current</span>
+      </div>
+      <div class="dept-row">
+        <div class="dept-dot" style="background:var(--muted)"></div>
+        <div class="dept-name">🤖 AI Department</div>
+        <span class="dept-status upcoming-dept">~Month 4</span>
+      </div>
+      <div class="dept-row">
+        <div class="dept-dot" style="background:var(--muted)"></div>
+        <div class="dept-name">💻 IT Department</div>
+        <span class="dept-status upcoming-dept">~Month 7</span>
+      </div>
+      <div class="dept-row">
+        <div class="dept-dot" style="background:var(--muted)"></div>
+        <div class="dept-name">📁 Other / TBD</div>
+        <span class="dept-status upcoming-dept">~Month 10</span>
+      </div>
+    </div>
+    <div style="font-size:12px; color:var(--muted); margin-top:10px;">💡 Rotation happens every ~3 months. Hang in there — IT dept is coming!</div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="section">
+    <div class="section-title">⚙️ Settings</div>
+    <div class="settings-grid">
+      <div class="field">
+        <label>Your Name</label>
+        <input type="text" id="settingName" value="Raymar" placeholder="Your name">
+      </div>
+      <div class="field">
+        <label>Hours Per Day</label>
+        <input type="number" id="settingHpd" value="8" min="1" max="12" step="0.5">
+      </div>
+      <div class="field">
+        <label>OJT Start Date</label>
+        <input type="date" id="settingStart">
+      </div>
+      <div class="field">
+        <label>Semester Total Hours</label>
+        <select id="settingSem">
+          <option value="900" selected>900 hrs (this sem)</option>
+          <option value="1800">1800 hrs (full)</option>
+        </select>
+      </div>
+    </div>
+    <div class="settings-save">
+      <button class="btn" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──
+const TOTAL = 1800;
+let state = {
+  name: 'Raymar',
+  hpd: 8,
+  startDate: '2026-06-23',
+  logs: [
+    { date: '2026-06-23', hrs: 8, note: 'Day 1 — Orientation' },
+    { date: '2026-06-24', hrs: 8, note: 'Day 2 — Cafeteria operations' }
+  ]
+};
+
+// ── PERSISTENCE ──
+function save() {
+  try { localStorage.setItem('ojt_state', JSON.stringify(state)); } catch(e){}
+}
+function load() {
+  try {
+    const s = localStorage.getItem('ojt_state');
+    if (s) state = { ...state, ...JSON.parse(s) };
+  } catch(e){}
+}
+
+// ── QUOTES ──
+const quotes = [
+  "Every hour you log is one step closer to becoming the IT professional you're training to be.",
+  "Homesickness means you love where you came from. Keep going — they're proud of you back home.",
+  "1,800 hours sounds like forever. But you're already on Day 3. You've already started. That's the hardest part.",
+  "The cafeteria today, the AI department tomorrow. Your rotation is a full tour of the company — embrace it.",
+  "Every swipe of that computer in the cafeteria is you learning the business. Nothing is wasted.",
+  "Ibog na kaayo, pero kaya pa! One day at a time, Raymar.",
+  "You built an IoT mosquito trap and defended a thesis. 1,800 hours? You've got this.",
+  "The best engineers understand every part of the operation. You're getting a head start.",
+  "Missing home is proof you have something worth missing. Let it fuel you, not stop you.",
+  "Progress is progress. Even 8 hours in a cafeteria beats 0 hours anywhere.",
+  "Your classmates in the AI dept will swap stories with you during rotation. Your cafeteria experience will surprise them.",
+  "Each logged hour is a brick. 1,800 bricks build something solid.",
+  "You didn't come this far in BIT-CT to stop now. Fourth year. Almost there.",
+  "Think of it as a game — 1,800 XP to unlock: Licensed IT Professional."
+];
+let lastQ = -1;
+function newQuote() {
+  let i;
+  do { i = Math.floor(Math.random() * quotes.length); } while (i === lastQ);
+  lastQ = i;
+  const el = document.getElementById('quoteText');
+  el.style.opacity = 0;
+  setTimeout(() => { el.textContent = quotes[i]; el.style.opacity = 1; el.style.transition = 'opacity 0.4s'; }, 200);
+}
+
+// ── COMPUTED ──
+function totalDone() { return state.logs.reduce((s,l) => s + l.hrs, 0); }
+function hoursLeft() { return Math.max(0, TOTAL - totalDone()); }
+function daysRendered() { return state.logs.length; }
+function avgHpd() {
+  const d = daysRendered();
+  return d ? (totalDone() / d).toFixed(1) : state.hpd;
+}
+function daysRemaining() {
+  const h = hoursLeft();
+  const hpd = parseFloat(avgHpd()) || state.hpd;
+  return Math.ceil(h / hpd);
+}
+function estimatedFinish() {
+  const dr = daysRemaining();
+  // business days from today
+  let d = new Date();
+  let count = 0;
+  while (count < dr) {
+    d.setDate(d.getDate() + 1);
+    const day = d.getDay();
+    if (day !== 0 && day !== 6) count++;
+  }
+  return d;
+}
+function pct() { return Math.min(100, (totalDone() / TOTAL) * 100); }
+function semLeft() {
+  const semTotal = 900;
+  return Math.max(0, semTotal - totalDone());
+}
+
+// ── MILESTONES ──
+const MILESTONES = [
+  { hrs: 50,   icon: '🌱', name: 'First Bloom',     sub: 'You\'ve broken the ice!' },
+  { hrs: 100,  icon: '💯', name: 'Triple Digits',   sub: '100 hours logged — serious grind.' },
+  { hrs: 180,  icon: '🔄', name: 'First Rotation',  sub: 'Halfway to your first dept switch!' },
+  { hrs: 300,  icon: '🎯', name: 'Quarter Done',     sub: '300/1800 — 1/6 of the journey!' },
+  { hrs: 450,  icon: '🚀', name: 'Quarter Sem',      sub: 'First semester quarter complete.' },
+  { hrs: 600,  icon: '⚡', name: 'Third Done',       sub: '600 hours — you\'re rolling now.' },
+  { hrs: 900,  icon: '🏅', name: 'Semester 1 Done!', sub: 'Halfway through the full OJT!' },
+  { hrs: 1000, icon: '🔥', name: '1K Club',          sub: 'Four digits. Unstoppable.' },
+  { hrs: 1200, icon: '💎', name: 'Two-Thirds',       sub: 'The end is becoming visible.' },
+  { hrs: 1500, icon: '🦁', name: 'Final Stretch',    sub: 'Only 300 left. You\'re a beast.' },
+  { hrs: 1800, icon: '🎓', name: 'OJT Complete!',    sub: 'You did it, Raymar!! 🎉' },
+];
+
+function renderMilestones() {
+  const done = totalDone();
+  const el = document.getElementById('milestoneList');
+  let html = '';
+  let nextFound = false;
+  MILESTONES.forEach(m => {
+    const reached = done >= m.hrs;
+    const isNext = !reached && !nextFound;
+    if (isNext) nextFound = true;
+    const cls = reached ? 'milestone reached' : isNext ? 'milestone next' : 'milestone';
+    const badge = reached
+      ? '<span class="milestone-badge badge-done">✓ Done</span>'
+      : isNext
+        ? `<span class="milestone-badge badge-next">${m.hrs} hrs</span>`
+        : `<span class="milestone-badge badge-lock">${m.hrs} hrs</span>`;
+    html += `<div class="${cls}">
+      <div class="milestone-icon">${m.icon}</div>
+      <div class="milestone-info">
+        <div class="milestone-name">${m.name}</div>
+        <div class="milestone-sub">${m.sub}</div>
+      </div>
+      ${badge}
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+// ── RING ──
+function renderRing() {
+  const p = pct();
+  const circ = 2 * Math.PI * 96;
+  const offset = circ - (p / 100) * circ;
+  const ring = document.getElementById('ringFill');
+  const pctEl = document.getElementById('ringPct');
+  const hrsEl = document.getElementById('ringHours');
+  ring.style.strokeDashoffset = offset;
+  pctEl.textContent = p.toFixed(1) + '%';
+  hrsEl.textContent = `${totalDone()} / ${TOTAL} hrs`;
+}
+
+// ── STATS ──
+function renderStats() {
+  document.getElementById('statDone').textContent = totalDone();
+  document.getElementById('statLeft').textContent = hoursLeft();
+  document.getElementById('statDays').textContent = daysRendered();
+  document.getElementById('statEst').textContent = daysRemaining();
+  document.getElementById('statAvg').textContent = avgHpd();
+  document.getElementById('statSem').textContent = semLeft();
+
+  const ef = estimatedFinish();
+  const opts = { year:'numeric', month:'long', day:'numeric' };
+  document.getElementById('finishDate').textContent = ef.toLocaleDateString('en-PH', opts);
+
+  const name = state.name || 'Raymar';
+  const greetings = [
+    `You're doing great, ${name}! 💪`,
+    `Keep going, ${name}! 🔥`,
+    `Almost there, ${name}! 🚀`,
+    `Stay strong, ${name}! ⚡`,
+  ];
+  const done = totalDone();
+  const idx = done >= 1500 ? 2 : done >= 900 ? 1 : 0;
+  document.getElementById('greeting').textContent = greetings[idx];
+}
+
+// ── LOG LIST ──
+function renderLogs() {
+  const el = document.getElementById('logList');
+  if (!state.logs.length) { el.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:10px;">No hours logged yet.</div>'; return; }
+  const sorted = [...state.logs].reverse();
+  el.innerHTML = sorted.map((l, i) => {
+    const realI = state.logs.length - 1 - i;
+    return `<div class="log-item">
+      <span class="log-date">${l.date}</span>
+      <span class="log-note">${l.note || ''}</span>
+      <span class="log-hrs">+${l.hrs}h</span>
+      <button class="btn danger sm" onclick="deleteLog(${realI})" style="margin-left:8px">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// ── COUNTDOWN TIMER ──
+let finishTs = null;
+function updateCountdown() {
+  if (!finishTs) { finishTs = estimatedFinish(); }
+  const diff = finishTs - Date.now();
+  if (diff <= 0) {
+    ['cdDays','cdHours','cdMins','cdSecs'].forEach(id => document.getElementById(id).textContent = '0');
+    return;
+  }
+  const days  = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const mins  = Math.floor((diff % 3600000) / 60000);
+  const secs  = Math.floor((diff % 60000) / 1000);
+  document.getElementById('cdDays').textContent  = String(days).padStart(2,'0');
+  document.getElementById('cdHours').textContent = String(hours).padStart(2,'0');
+  document.getElementById('cdMins').textContent  = String(mins).padStart(2,'0');
+  document.getElementById('cdSecs').textContent  = String(secs).padStart(2,'0');
+}
+
+// ── LOG HOURS ──
+function logHours() {
+  const date = document.getElementById('logDate').value;
+  const hrs  = parseFloat(document.getElementById('logHrs').value);
+  const note = document.getElementById('logNote').value.trim();
+  if (!date) { showToast('Please pick a date!', 'red'); return; }
+  if (!hrs || hrs <= 0) { showToast('Enter valid hours!', 'red'); return; }
+  state.logs.push({ date, hrs, note });
+  finishTs = null;
+  save(); renderAll();
+  document.getElementById('logNote').value = '';
+  showToast(`✅ ${hrs} hrs logged for ${date}!`);
+  checkMilestone();
+}
+
+function deleteLog(i) {
+  if (!confirm('Remove this log entry?')) return;
+  state.logs.splice(i, 1);
+  finishTs = null;
+  save(); renderAll();
+  showToast('Entry removed.', '#ef4444');
+}
+
+function checkMilestone() {
+  const done = totalDone();
+  const m = MILESTONES.find(m => done >= m.hrs && done - state.logs[state.logs.length-1].hrs < m.hrs);
+  if (m) {
+    setTimeout(() => showToast(`🎉 Milestone unlocked: ${m.name}!`, 'var(--gold)', 4000), 500);
+  }
+}
+
+// ── SETTINGS ──
+function saveSettings() {
+  state.name = document.getElementById('settingName').value || 'Raymar';
+  state.hpd  = parseFloat(document.getElementById('settingHpd').value) || 8;
+  state.startDate = document.getElementById('settingStart').value || state.startDate;
+  finishTs = null;
+  save(); renderAll();
+  showToast('Settings saved!');
+}
+function loadSettings() {
+  document.getElementById('settingName').value  = state.name;
+  document.getElementById('settingHpd').value   = state.hpd;
+  document.getElementById('settingStart').value = state.startDate;
+}
+
+// ── TOAST ──
+function showToast(msg, color, dur = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = color || 'var(--green)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+// ── INIT LOG DATE ──
+function setTodayDate() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('logDate').value = today;
+}
+
+// ── RENDER ALL ──
+function renderAll() {
+  renderRing();
+  renderStats();
+  renderMilestones();
+  renderLogs();
+  updateCountdown();
+}
+
+// ── BOOT ──
+load();
+loadSettings();
+setTodayDate();
+renderAll();
+setInterval(updateCountdown, 1000);
+
+// Animate ring on load
+setTimeout(() => renderRing(), 100);
+</script>
+</body>
+</html>
