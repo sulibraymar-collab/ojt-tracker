@@ -1007,5 +1007,9 @@ function showToast(msg,bg,dur){
   t.classList.add('show');setTimeout(function(){t.classList.remove('show')},dur);
 }
 </script>
+<script type="module">
+  import { inject } from 'https://cdn.jsdelivr.net/npm/@vercel/analytics@1/+esm';
+  inject();
+</script>
 </body>
 </html>
